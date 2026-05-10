@@ -100,16 +100,13 @@ export default function NewsContentClient({
 
       {hasBilingual ? (
         /* ── 雙語對照模式 ── */
-        <div className="space-y-8">
+        <div className="space-y-12">
           {bilingual.map((pair, i) => (
-            <div
-              key={i}
-              className="border-b border-accent-soft pb-8 last:border-0"
-            >
-              <p className="text-xl text-text-main leading-relaxed font-serif mb-2">
+            <div key={i} className="last:mb-0">
+              <p className="text-xl text-text-main leading-relaxed font-serif mb-3">
                 {renderWords(pair.en)}
               </p>
-              <p className="text-base text-primary/90 leading-relaxed">
+              <p className="text-lg text-primary/90 leading-relaxed">
                 {pair.zh}
               </p>
             </div>
@@ -117,17 +114,14 @@ export default function NewsContentClient({
         </div>
       ) : (
         /* ── 純英文逐句（翻譯前）── */
-        <div className="space-y-6">
+        <div className="space-y-12">
           {sentences.length > 0 ? (
             sentences.map((sentence, i) => (
-              <div
-                key={i}
-                className="border-b border-accent-soft pb-6 last:border-0"
-              >
-                <p className="text-xl text-text-main leading-relaxed font-serif">
+              <div key={i} className="last:mb-0">
+                <p className="text-xl text-text-main leading-relaxed font-serif mb-3">
                   {renderWords(sentence)}
                 </p>
-                <p className="mt-1 text-sm text-text-main/30 italic">
+                <p className="text-sm text-text-main/40 italic">
                   — 翻譯生成中...
                 </p>
               </div>
