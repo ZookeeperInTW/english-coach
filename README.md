@@ -1,20 +1,38 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
-
 ## Getting Started
 
-First, run the development server:
+First, set up your environment variables:
+
+1. Copy `.env.example` to `.env.local`.
+2. Fill in your Supabase credentials.
+
+Then, run the development server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+
+## Deployment
+
+### 1. GitHub
+
+Initialize git and push your code to a new GitHub repository:
+
+```bash
+git add .
+git commit -m "Initial commit"
+git remote add origin <your-repo-url>
+git push -u origin main
+```
+
+### 2. Vercel
+
+Connect your GitHub repository to Vercel and add the environment variables in the Vercel project settings.
+
+### 3. Supabase
+
+Ensure your Supabase project is active and the URL/Key are correctly set in the environment variables.
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
