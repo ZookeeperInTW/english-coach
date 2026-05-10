@@ -21,8 +21,7 @@ export default function NewsContent({
   const [selectedWord, setSelectedWord] = useState<string | null>(null);
 
   const handleWordClick = (word: string) => {
-    // 移除標點符號
-    const cleanWord = word.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "");
+    const cleanWord = word.replace(/[.,/#!$%^&*;:{}=\-_`~()"""'']/g, "");
     if (cleanWord.length > 1) {
       setSelectedWord(cleanWord);
     }
@@ -44,77 +43,98 @@ export default function NewsContent({
     }
   };
 
-  // 渲染英文句子（支援點擊單字）
-  const renderEnglishSentence = (text: string) => {
-    return text.split(" ").map((word, index) => (
+  // 渲染一段英文（每個字可點擊）
+  const renderEnWords = (text: string) =>
+    text.split(" ").map((word, i) => (
       <span
-        key={index}
+        key={i}
         onClick={() => handleWordClick(word)}
-        className="cursor-pointer hover:bg-blue-100 hover:text-blue-700 rounded px-0.5 transition-colors"
+        className="cursor-pointer hover:bg-primary/10 hover:text-primary rounded px-0.5 transition-colors"
       >
         {word}{" "}
       </span>
     ));
-  };
+
+  // 將純英文內容依句點拆成句子陣列
+  const splitIntoSentences = (text: string): string[] =>
+    text
+      .split(/(?<=[.!?])\s+/)
+      .map((s) => s.trim())
+      .filter((s) => s.length > 10);
+
+  const hasBilingual = contentBilingual && contentBilingual.length > 0;
+
+  // 尚無翻譯：顯示英文逐句（之後翻譯填入每句下面）
+  const englishSentences = !hasBilingual
+    ? splitIntoSentences(contentEn || "")
+    : [];
 
   return (
-    <div className="max-w-4xl mx-auto relative space-y-12 pb-24">
-      {contentBilingual && contentBilingual.length > 0 ? (
-        // 雙語對照模式
-        <div className="space-y-10">
-          {contentBilingual.map((pair, index) => (
+    <div className="max-w-3xl mx-auto relative pb-32">
+      {hasBilingual ? (
+        /* ── 雙語對照模式 ─────────────────────── */
+        <div className="space-y-8">
+          {contentBilingual.map((pair, i) => (
             <div
-              key={index}
-              className="group border-b border-accent-soft pb-8 last:border-0"
+              key={i}
+              className="border-b border-accent-soft pb-8 last:border-0"
             >
-              <p className="text-2xl text-text-main leading-relaxed font-serif mb-3">
-                {renderEnglishSentence(pair.en)}
+              {/* 英文 */}
+              <p className="text-xl text-text-main leading-relaxed font-serif mb-2">
+                {renderEnWords(pair.en)}
               </p>
-              <p className="text-xl text-primary leading-relaxed font-medium">
+              {/* 中文翻譯，緊接在英文下 */}
+              <p className="text-base text-primary/90 leading-relaxed">
                 {pair.zh}
               </p>
             </div>
           ))}
         </div>
       ) : (
-        // 單欄顯示模式（相容舊資料）
-        <div className="space-y-10">
-          <div className="border-b border-accent-soft pb-8">
-            <h3 className="text-sm font-semibold text-primary uppercase tracking-wider mb-4">
-              English Original
-            </h3>
-            <div className="text-2xl text-text-main leading-relaxed font-serif">
-              {contentEn
-                ? renderEnglishSentence(contentEn)
-                : "此新聞目前沒有內文資料。"}
-            </div>
+        /* ── 純英文模式（翻譯前）───────────────── */
+        <div className="space-y-6">
+          {/* 翻譯中提示橫幅 */}
+          <div className="flex items-center gap-3 bg-primary/5 border border-primary/20 rounded-xl px-5 py-3 text-sm text-primary">
+            <span className="animate-spin text-lg">⏳</span>
+            <span>AI 正在生成雙語翻譯，重新整理頁面即可查看翻譯結果</span>
           </div>
-          <div>
-            <h3 className="text-sm font-semibold text-primary uppercase tracking-wider mb-4">
-              中文翻譯
-            </h3>
-            <p className="text-xl text-text-main/80 leading-relaxed font-medium">
-              {contentZh || "翻譯處理中..."}
-            </p>
-          </div>
+
+          {englishSentences.length > 0 ? (
+            englishSentences.map((sentence, i) => (
+              <div
+                key={i}
+                className="border-b border-accent-soft pb-6 last:border-0"
+              >
+                <p className="text-xl text-text-main leading-relaxed font-serif">
+                  {renderEnWords(sentence)}
+                </p>
+                {/* 中文佔位 */}
+                <p className="mt-1 text-sm text-text-main/30 italic">
+                  — 翻譯生成中...
+                </p>
+              </div>
+            ))
+          ) : (
+            <p className="text-text-main/40 italic">正在載入文章內容...</p>
+          )}
         </div>
       )}
 
-      {/* Word Action Tooltip */}
+      {/* ── 點擊單字浮動工具列 ───────────────── */}
       {selectedWord && (
-        <div className="fixed bottom-12 left-1/2 -translate-x-1/2 bg-white shadow-2xl border border-accent-soft rounded-full px-8 py-4 flex items-center space-x-6 animate-in fade-in slide-in-from-bottom-4 duration-300 z-50">
-          <span className="text-xl font-bold text-text-main">
+        <div className="fixed bottom-10 left-1/2 -translate-x-1/2 bg-white shadow-2xl border border-accent-soft rounded-full px-8 py-4 flex items-center gap-5 z-50">
+          <span className="text-lg font-bold text-text-main">
             {selectedWord}
           </span>
           <button
             onClick={() => addToVocab(selectedWord)}
-            className="bg-primary text-white px-6 py-2 rounded-full font-semibold hover:opacity-90 transition-opacity"
+            className="bg-primary text-white px-5 py-2 rounded-full text-sm font-semibold hover:opacity-90 transition-opacity"
           >
             加入單字庫
           </button>
           <button
             onClick={() => setSelectedWord(null)}
-            className="text-gray-400 hover:text-gray-600"
+            className="text-gray-400 hover:text-gray-600 text-sm"
           >
             取消
           </button>
