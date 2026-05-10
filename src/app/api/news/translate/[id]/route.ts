@@ -1,19 +1,91 @@
 import { NextResponse } from "next/server";
-import { ensureTranslation } from "@/services/newsService";
+import { createClient } from "@/utils/supabase/server";
+import { translateText, translateToBilingual } from "@/services/aiService";
 export const dynamic = "force-dynamic";
-export const maxDuration = 60; // 告訴 Vercel 最多等 60 秒
+export const maxDuration = 60;
 
 export async function GET(
   _req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const article = await ensureTranslation(id);
-  // 直接回傳翻譯結果，不需要 Client 再發一次請求
-  return NextResponse.json({
-    success: true,
-    translated: !!article?.content_bilingual,
-    content_bilingual: article?.content_bilingual ?? null,
-    title_zh: article?.title_zh ?? "",
-  });
+  const supabase = await createClient();
+
+  // 1. 抓文章
+  const { data: article, error: fetchError } = await supabase
+    .from("news")
+    .select("*")
+    .eq("id", id)
+    .single();
+
+  if (fetchError || !article) {
+    return NextResponse.json(
+      { success: false, error: "Article not found" },
+      { status: 404 }
+    );
+  }
+
+  // 2. 已有翻譯，直接回傳
+  if (article.content_bilingual) {
+    return NextResponse.json({
+      success: true,
+      translated: true,
+      content_bilingual: article.content_bilingual,
+      title_zh: article.title_zh,
+    });
+  }
+
+  // 3. 無翻譯，呼叫 AI
+  console.log(`[Translate API] Translating: ${article.title_en}`);
+  console.log(
+    `[Translate API] Content length: ${article.content_en?.length ?? 0}`
+  );
+
+  try {
+    const [translatedTitle, bilingualContent] = await Promise.all([
+      translateText(article.title_en),
+      translateToBilingual(article.content_en),
+    ]);
+
+    console.log(
+      `[Translate API] Bilingual result: ${JSON.stringify(bilingualContent)?.slice(0, 200)}`
+    );
+
+    // 4. 存回資料庫
+    const { error: updateError } = await supabase
+      .from("news")
+      .update({
+        title_zh: translatedTitle,
+        content_zh: "已生成雙語對照",
+        content_bilingual: bilingualContent,
+      })
+      .eq("id", id);
+
+    if (updateError) {
+      console.error(`[Translate API] DB update failed:`, updateError);
+      // DB 寫入失敗，但仍然回傳翻譯結果給前端顯示
+      return NextResponse.json({
+        success: true,
+        translated: true,
+        dbError: updateError.message,
+        content_bilingual: bilingualContent,
+        title_zh: translatedTitle,
+      });
+    }
+
+    return NextResponse.json({
+      success: true,
+      translated: true,
+      content_bilingual: bilingualContent,
+      title_zh: translatedTitle,
+    });
+  } catch (err) {
+    const errorMessage = err instanceof Error ? err.message : String(err);
+    console.error(`[Translate API] AI failed:`, errorMessage);
+    return NextResponse.json({
+      success: false,
+      translated: false,
+      error: errorMessage,
+    });
+  }
 }
