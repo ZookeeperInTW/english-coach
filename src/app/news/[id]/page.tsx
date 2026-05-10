@@ -49,6 +49,7 @@ export default async function NewsDetailPage({
         <NewsContent
           contentEn={article.content_en}
           contentZh={article.content_zh}
+          contentBilingual={article.content_bilingual}
         />
       </div>
     </div>

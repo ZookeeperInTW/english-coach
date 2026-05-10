@@ -2,14 +2,21 @@
 
 import { useState } from "react";
 
+interface BilingualSentence {
+  en: string;
+  zh: string;
+}
+
 interface NewsContentProps {
   contentEn: string;
   contentZh: string;
+  contentBilingual?: BilingualSentence[] | null;
 }
 
 export default function NewsContent({
   contentEn,
   contentZh,
+  contentBilingual,
 }: NewsContentProps) {
   const [selectedWord, setSelectedWord] = useState<string | null>(null);
 
@@ -37,33 +44,54 @@ export default function NewsContent({
     }
   };
 
+  // 渲染英文句子（支援點擊單字）
+  const renderEnglishSentence = (text: string) => {
+    return text.split(" ").map((word, index) => (
+      <span
+        key={index}
+        onClick={() => handleWordClick(word)}
+        className="cursor-pointer hover:bg-blue-100 hover:text-blue-700 rounded px-0.5 transition-colors"
+      >
+        {word}{" "}
+      </span>
+    ));
+  };
+
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 relative">
-      {/* English Section */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
-        <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-6">
-          English Original
-        </h3>
-        <div className="text-xl text-gray-800 leading-relaxed font-serif">
-          {contentEn.split(" ").map((word, index) => (
-            <span
-              key={index}
-              onClick={() => handleWordClick(word)}
-              className="cursor-pointer hover:bg-blue-100 hover:text-blue-700 rounded px-0.5 transition-colors"
-            >
-              {word}{" "}
-            </span>
+    <div className="max-w-4xl mx-auto relative">
+      {contentBilingual && contentBilingual.length > 0 ? (
+        // 中英對照模式
+        <div className="space-y-12">
+          {contentBilingual.map((pair, index) => (
+            <div key={index} className="group">
+              <p className="text-2xl text-gray-800 leading-relaxed font-serif mb-2">
+                {renderEnglishSentence(pair.en)}
+              </p>
+              <p className="text-xl text-blue-600/80 leading-relaxed font-medium">
+                {pair.zh}
+              </p>
+            </div>
           ))}
         </div>
-      </div>
-
-      {/* Chinese Section */}
-      <div className="bg-gray-50 rounded-2xl border border-gray-100 p-8">
-        <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-6">
-          中文翻譯
-        </h3>
-        <p className="text-xl text-gray-600 leading-relaxed">{contentZh}</p>
-      </div>
+      ) : (
+        // 傳統並排模式（相容舊資料）
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
+            <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-6">
+              English Original
+            </h3>
+            <div className="text-xl text-gray-800 leading-relaxed font-serif">
+              {renderEnglishSentence(contentEn)}
+            </div>
+          </div>
+          <div className="bg-gray-50 rounded-2xl border border-gray-100 p-8">
+            <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-6">
+              中文翻譯
+            </h3>
+            <p className="text-xl text-gray-600 leading-relaxed">{contentZh}</p>
+          </div>
+        </div>
+      )}
 
       {/* Word Action Tooltip */}
       {selectedWord && (

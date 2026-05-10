@@ -1,6 +1,6 @@
 import Parser from "rss-parser";
 import { createClient } from "@/utils/supabase/server";
-import { translateText } from "./aiService";
+import { translateText, translateToBilingual } from "./aiService";
 
 const parser = new Parser();
 
@@ -8,15 +8,29 @@ export async function fetchAndSyncNews() {
   console.log("Starting news sync service...");
   const supabase = await createClient();
 
+  // 1. 自動清理 30 天前的舊新聞
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+  const { error: deleteError } = await supabase
+    .from("news")
+    .delete()
+    .lt("created_at", thirtyDaysAgo.toISOString());
+
+  if (deleteError) {
+    console.error("Failed to cleanup old news:", deleteError);
+  } else {
+    console.log("Cleanup completed: old news removed.");
+  }
+
+  // 移除暫時性的強制刪除邏輯
+
   const sources = [
     {
       url: "https://feeds.feedburner.com/rsscna/engnews/",
-      category: "international",
+      category: "International",
     },
-    {
-      url: "https://www.taipeitimes.com/xml/index.rss",
-      category: "international",
-    },
+    { url: "https://www.taipeitimes.com/xml/index.rss", category: "Business" },
   ];
 
   for (const source of sources) {
@@ -30,7 +44,7 @@ export async function fetchAndSyncNews() {
           const title = item.title || "";
           const link = item.link || "";
 
-          // 1. 同時檢查連結與標題是否重複
+          // 2. 同時檢查連結與標題是否重複
           const { data: existingUrl } = await supabase
             .from("news")
             .select("id")
@@ -48,20 +62,19 @@ export async function fetchAndSyncNews() {
             console.log(`Syncing: ${title}`);
 
             let translatedTitle = "翻譯處理中...";
-            let translatedContent = "翻譯處理中...";
+            let bilingualContent = null;
 
             try {
-              // 嘗試 AI 翻譯
+              // 嘗試 AI 雙語翻譯
               translatedTitle = await translateText(title);
               await new Promise((resolve) => setTimeout(resolve, 1000));
-              translatedContent = await translateText(content);
+              bilingualContent = await translateToBilingual(content);
               await new Promise((resolve) => setTimeout(resolve, 1000));
             } catch (aiError) {
               console.warn(
                 `AI Translation failed for "${title}", saving anyway.`,
                 aiError
               );
-              // 如果翻譯失敗，標題暫時用英文代替，內容標註待翻譯
               translatedTitle = `(英) ${title}`;
             }
 
@@ -69,10 +82,11 @@ export async function fetchAndSyncNews() {
               title_en: title,
               title_zh: translatedTitle,
               content_en: content,
-              content_zh: translatedContent,
+              content_zh: "已轉換為雙語對照",
+              content_bilingual: bilingualContent,
               category: source.category,
               source_url: link,
-              image_url: item.enclosure?.url || null, // 嘗試從 enclosure 抓取圖片
+              image_url: item.enclosure?.url || null,
             });
 
             if (insertError) {
