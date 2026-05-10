@@ -1,8 +1,41 @@
 import Parser from "rss-parser";
 import { createClient } from "@/utils/supabase/server";
+import * as cheerio from "cheerio";
 import { translateText, translateToBilingual } from "./aiService";
 
 const parser = new Parser();
+
+/**
+ * 抓取網頁完整內容
+ */
+async function fetchFullContent(url: string): Promise<string> {
+  try {
+    const response = await fetch(url, {
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+      },
+    });
+    const html = await response.text();
+    const $ = cheerio.load(html);
+
+    // Focus Taiwan 的正文通常在 .article .paragraph 內
+    let content = $(".article .paragraph").text().trim();
+
+    // 如果找不到，試試通用的 p 標籤組合
+    if (!content) {
+      content = $("article p")
+        .map((_, el) => $(el).text())
+        .get()
+        .join("\n");
+    }
+
+    return content;
+  } catch (error) {
+    console.error(`Failed to fetch full content from ${url}:`, error);
+    return "";
+  }
+}
 
 export async function fetchAndSyncNews() {
   console.log("Starting news sync service...");
@@ -58,22 +91,29 @@ export async function fetchAndSyncNews() {
             .maybeSingle();
 
           if (!existingUrl && !existingTitle) {
-            // 多重備援抓取內文
-            const content =
-              (
-                item.contentSnippet ||
-                item.content ||
-                item.description ||
-                ""
-              ).trim() || title;
+            // 先嘗試爬取網頁完整內文
+            let content = await fetchFullContent(link);
 
-            // 如果內容過短且標題也過短，則判定為無效新聞
+            // 如果爬不到完整內文，再用 RSS 的摘要作為備援
+            if (!content || content.length < 50) {
+              content =
+                (
+                  item.contentSnippet ||
+                  item.content ||
+                  item.description ||
+                  ""
+                ).trim() || title;
+            }
+
+            // 如果內容依然過短，則判定為無效新聞
             if (content.length < 10) {
               console.log(`Skipping invalid news: ${title}`);
               continue;
             }
 
-            console.log(`Syncing: ${title}`);
+            console.log(
+              `Syncing full content for: ${title} (${content.length} chars)`
+            );
 
             let translatedTitle = "翻譯處理中...";
             let bilingualContent = null;
