@@ -1,6 +1,6 @@
+import { createClient } from "@/utils/supabase/server";
 import { notFound } from "next/navigation";
-import NewsContent from "@/components/NewsContent";
-import { ensureTranslation } from "@/services/newsService";
+import NewsContentClient from "@/components/NewsContentClient";
 
 export default async function NewsDetailPage({
   params,
@@ -8,13 +8,16 @@ export default async function NewsDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  const supabase = await createClient();
 
-  // 觸發即時翻譯（如果已有翻譯會秒回，沒有則會等待 AI 產出）
-  const article = await ensureTranslation(id);
+  // 直接抓取文章——不等 AI，秒開
+  const { data: article } = await supabase
+    .from("news")
+    .select("*")
+    .eq("id", id)
+    .single();
 
-  if (!article) {
-    notFound();
-  }
+  if (!article) notFound();
 
   return (
     <div className="bg-bg-beige min-h-screen py-16">
@@ -37,14 +40,17 @@ export default async function NewsDetailPage({
           <h1 className="text-4xl font-extrabold text-text-main tracking-tight sm:text-5xl mb-4">
             {article.title_en}
           </h1>
-          <p className="text-2xl text-primary font-medium italic">
-            {article.title_zh}
-          </p>
+          {article.title_zh && (
+            <p className="text-2xl text-primary font-medium italic">
+              {article.title_zh}
+            </p>
+          )}
         </div>
 
-        <NewsContent
+        {/* Client component 負責顯示內容並在背景觸發翻譯 */}
+        <NewsContentClient
+          articleId={id}
           contentEn={article.content_en}
-          contentZh={article.content_zh}
           contentBilingual={article.content_bilingual}
         />
       </div>
