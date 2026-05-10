@@ -18,7 +18,7 @@
 
 - [x] 在 Supabase 建立 `news`, `vocabulary`, `sentences` 資料表 (提供 SQL 腳本)
 - [x] 實作 RSS 新聞抓取腳本 (Focus Taiwan, Taipei Times) (已建立 API Route)
-- [ ] 整合 AI 翻譯與造句 API (Gemini/OpenAI)
+- [x] 整合 AI 翻譯與造句 API (Gemini/OpenAI) (已串接 Gemini API)
 
 ## Phase 4: Frontend Features
 

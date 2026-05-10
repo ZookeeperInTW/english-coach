@@ -1,5 +1,6 @@
 import Parser from "rss-parser";
 import { createClient } from "@/utils/supabase/server";
+import { translateText } from "./aiService";
 
 const parser = new Parser();
 
@@ -31,15 +32,18 @@ export async function fetchAndSyncNews() {
           .single();
 
         if (!existing) {
-          // 這裡未來應整合 AI 翻譯 API
-          // 目前先用 Mock 翻譯，或僅儲存英文
-          const translatedTitle = `[翻譯] ${item.title}`;
-          const translatedContent = `[翻譯] ${item.contentSnippet || item.content || ""}`;
+          const content = item.contentSnippet || item.content || "";
+
+          // 使用 AI 翻譯
+          const [translatedTitle, translatedContent] = await Promise.all([
+            translateText(item.title || ""),
+            translateText(content),
+          ]);
 
           await supabase.from("news").insert({
             title_en: item.title,
             title_zh: translatedTitle,
-            content_en: item.contentSnippet || item.content || "",
+            content_en: content,
             content_zh: translatedContent,
             category: source.category,
             source_url: item.link,
