@@ -84,7 +84,9 @@ export default function NewsContent({
               English Original
             </h3>
             <div className="text-2xl text-text-main leading-relaxed font-serif">
-              {renderEnglishSentence(contentEn)}
+              {contentEn
+                ? renderEnglishSentence(contentEn)
+                : "此新聞目前沒有內文資料。"}
             </div>
           </div>
           <div>
@@ -92,7 +94,7 @@ export default function NewsContent({
               中文翻譯
             </h3>
             <p className="text-xl text-text-main/80 leading-relaxed font-medium">
-              {contentZh}
+              {contentZh || "翻譯處理中..."}
             </p>
           </div>
         </div>

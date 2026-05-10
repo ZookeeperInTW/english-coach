@@ -60,7 +60,19 @@ export async function fetchAndSyncNews() {
           if (!existingUrl && !existingTitle) {
             // 多重備援抓取內文
             const content =
-              item.contentSnippet || item.content || item.description || title;
+              (
+                item.contentSnippet ||
+                item.content ||
+                item.description ||
+                ""
+              ).trim() || title;
+
+            // 如果內容過短且標題也過短，則判定為無效新聞
+            if (content.length < 10) {
+              console.log(`Skipping invalid news: ${title}`);
+              continue;
+            }
+
             console.log(`Syncing: ${title}`);
 
             let translatedTitle = "翻譯處理中...";
