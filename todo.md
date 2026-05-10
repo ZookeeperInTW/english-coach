@@ -22,6 +22,13 @@
 
 ## Phase 4: Deployment
 
-- [ ] GitHub Repository 連結
-- [ ] Vercel 部署設定
+- [x] GitHub Repository 連結
+- [/] Vercel 部署設定
 - [ ] 自動部署測試 (CI/CD)
+
+## Phase 5: Verification (流程檢查)
+
+- [x] 本地 Build 測試 (npm run build)
+- [x] Coding Style 檢查 (npm run lint)
+- [ ] 模擬 Commit 觸發 Husky 測試
+- [ ] Vercel 正式環境預覽
