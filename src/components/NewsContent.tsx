@@ -58,50 +58,55 @@ export default function NewsContent({
   };
 
   return (
-    <div className="max-w-4xl mx-auto relative">
+    <div className="max-w-4xl mx-auto relative space-y-12 pb-24">
       {contentBilingual && contentBilingual.length > 0 ? (
-        // 中英對照模式
-        <div className="space-y-12">
+        // 雙語對照模式
+        <div className="space-y-10">
           {contentBilingual.map((pair, index) => (
-            <div key={index} className="group">
-              <p className="text-2xl text-gray-800 leading-relaxed font-serif mb-2">
+            <div
+              key={index}
+              className="group border-b border-accent-soft pb-8 last:border-0"
+            >
+              <p className="text-2xl text-text-main leading-relaxed font-serif mb-3">
                 {renderEnglishSentence(pair.en)}
               </p>
-              <p className="text-xl text-blue-600/80 leading-relaxed font-medium">
+              <p className="text-xl text-primary leading-relaxed font-medium">
                 {pair.zh}
               </p>
             </div>
           ))}
         </div>
       ) : (
-        // 傳統並排模式（相容舊資料）
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
-            <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-6">
+        // 單欄顯示模式（相容舊資料）
+        <div className="space-y-10">
+          <div className="border-b border-accent-soft pb-8">
+            <h3 className="text-sm font-semibold text-primary uppercase tracking-wider mb-4">
               English Original
             </h3>
-            <div className="text-xl text-gray-800 leading-relaxed font-serif">
+            <div className="text-2xl text-text-main leading-relaxed font-serif">
               {renderEnglishSentence(contentEn)}
             </div>
           </div>
-          <div className="bg-gray-50 rounded-2xl border border-gray-100 p-8">
-            <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-6">
+          <div>
+            <h3 className="text-sm font-semibold text-primary uppercase tracking-wider mb-4">
               中文翻譯
             </h3>
-            <p className="text-xl text-gray-600 leading-relaxed">{contentZh}</p>
+            <p className="text-xl text-text-main/80 leading-relaxed font-medium">
+              {contentZh}
+            </p>
           </div>
         </div>
       )}
 
       {/* Word Action Tooltip */}
       {selectedWord && (
-        <div className="fixed bottom-12 left-1/2 -translate-x-1/2 bg-white shadow-2xl border border-blue-100 rounded-full px-8 py-4 flex items-center space-x-6 animate-in fade-in slide-in-from-bottom-4 duration-300 z-50">
-          <span className="text-xl font-bold text-gray-900">
+        <div className="fixed bottom-12 left-1/2 -translate-x-1/2 bg-white shadow-2xl border border-accent-soft rounded-full px-8 py-4 flex items-center space-x-6 animate-in fade-in slide-in-from-bottom-4 duration-300 z-50">
+          <span className="text-xl font-bold text-text-main">
             {selectedWord}
           </span>
           <button
             onClick={() => addToVocab(selectedWord)}
-            className="bg-blue-600 text-white px-6 py-2 rounded-full font-semibold hover:bg-blue-700 transition-colors"
+            className="bg-primary text-white px-6 py-2 rounded-full font-semibold hover:opacity-90 transition-opacity"
           >
             加入單字庫
           </button>

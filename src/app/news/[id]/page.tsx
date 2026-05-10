@@ -28,8 +28,8 @@ export default async function NewsDetailPage({
             <span
               className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold ${
                 article.category === "finance"
-                  ? "bg-emerald-100 text-emerald-800"
-                  : "bg-blue-100 text-blue-800"
+                  ? "bg-primary/10 text-primary"
+                  : "bg-secondary/10 text-secondary"
               }`}
             >
               {article.category === "finance" ? "財金新聞" : "國際新聞"}
@@ -38,10 +38,10 @@ export default async function NewsDetailPage({
               {new Date(article.created_at).toLocaleDateString("zh-TW")}
             </span>
           </div>
-          <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight sm:text-5xl mb-4">
+          <h1 className="text-4xl font-extrabold text-text-main tracking-tight sm:text-5xl mb-4">
             {article.title_en}
           </h1>
-          <p className="text-2xl text-blue-600 font-medium italic">
+          <p className="text-2xl text-primary font-medium italic">
             {article.title_zh}
           </p>
         </div>
