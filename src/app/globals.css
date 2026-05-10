@@ -8,8 +8,8 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --color-primary: #8c7851;
-  --color-secondary: #5d6d4f;
+  --color-primary: #5d6d4f; /* 橄欖綠 (主要色) */
+  --color-secondary: #8c7851; /* 大地褐 (次要色) */
   --color-text-main: #3c2f2f;
   --color-bg-beige: #faf7f2;
   --color-accent-soft: #e9e0d1;
