@@ -33,6 +33,12 @@ export default function Navbar() {
               控制面板
             </Link>
             <Link
+              href="/vocabulary"
+              className="text-gray-600 hover:text-blue-600 px-3 py-2 text-sm font-medium transition-colors"
+            >
+              我的單字庫
+            </Link>
+            <Link
               href="/settings"
               className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors shadow-sm"
             >
@@ -101,6 +107,13 @@ export default function Navbar() {
             onClick={() => setIsOpen(false)}
           >
             控制面板
+          </Link>
+          <Link
+            href="/vocabulary"
+            className="text-gray-600 hover:text-blue-600 block px-3 py-2 rounded-md text-base font-medium"
+            onClick={() => setIsOpen(false)}
+          >
+            我的單字庫
           </Link>
           <Link
             href="/settings"

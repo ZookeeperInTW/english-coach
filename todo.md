@@ -22,13 +22,13 @@
 
 ## Phase 4: Frontend Features
 
-- [ ] 新聞列表頁面 (英中對照卡片式佈局)
-- [ ] 新聞內文詳情頁面
-- [ ] 單字庫管理頁面 (單字卡、造句顯示)
-- [ ] 「加入單字庫」功能按鈕
+- [x] 新聞列表頁面 (英中對照卡片式佈局)
+- [x] 新聞內文詳情頁面
+- [x] 單字庫管理頁面 (單字卡、造句顯示)
+- [x] 「加入單字庫」功能按鈕
 
 ## Phase 5: Verification & Deployment
 
 - [x] GitHub Repository 連結
 - [x] 流程檢查與驗證 (Build, Lint, Git Hooks)
-- [ ] 自動 Commit & Push 流程驗證
+- [x] 自動 Commit & Push 流程驗證

@@ -1,65 +1,102 @@
-import Image from "next/image";
+import { createClient } from "@/utils/supabase/server";
+import Link from "next/link";
 
-export default function Home() {
+export default async function Home() {
+  const supabase = await createClient();
+
+  const { data: news } = await supabase
+    .from("news")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(20);
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
+    <div className="bg-gray-50 min-h-screen py-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <header className="mb-12">
+          <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight sm:text-5xl">
+            每日英語教練
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+          <p className="mt-4 text-xl text-gray-500 max-w-2xl">
+            透過最新的國際與財金新聞，同步提升您的英語閱讀與財經知識。
           </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+        </header>
+
+        {!news || news.length === 0 ? (
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-12 text-center">
+            <h2 className="text-2xl font-semibold text-gray-900">
+              尚無新聞資料
+            </h2>
+            <p className="mt-4 text-gray-500">
+              請先確認您已設定好 Supabase 並執行了新聞同步。
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-2">
+            {news.map((item) => (
+              <div
+                key={item.id}
+                className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow flex flex-col"
+              >
+                <div className="p-8 flex-grow">
+                  <div className="flex items-center space-x-2 mb-4">
+                    <span
+                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        item.category === "finance"
+                          ? "bg-emerald-100 text-emerald-800"
+                          : "bg-blue-100 text-blue-800"
+                      }`}
+                    >
+                      {item.category === "finance" ? "財金新聞" : "國際新聞"}
+                    </span>
+                    <span className="text-gray-400 text-xs">
+                      {new Date(item.created_at).toLocaleDateString("zh-TW")}
+                    </span>
+                  </div>
+                  <h2 className="text-xl font-bold text-gray-900 mb-2 line-clamp-2">
+                    {item.title_en}
+                  </h2>
+                  <p className="text-lg text-blue-600 font-medium mb-6">
+                    {item.title_zh}
+                  </p>
+                  <div className="space-y-4">
+                    <p className="text-gray-600 line-clamp-3 italic">
+                      {item.content_en}
+                    </p>
+                    <p className="text-gray-500 line-clamp-3">
+                      {item.content_zh}
+                    </p>
+                  </div>
+                </div>
+                <div className="bg-gray-50 px-8 py-4 border-t border-gray-100 flex justify-between items-center">
+                  <Link
+                    href={`/news/${item.id}`}
+                    className="text-blue-600 font-semibold hover:text-blue-700 transition-colors"
+                  >
+                    閱讀全文 & 學習單字 &rarr;
+                  </Link>
+                  <button className="text-gray-400 hover:text-blue-600 transition-colors">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-6 w-6"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"
+                      />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

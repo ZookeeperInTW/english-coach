@@ -11,7 +11,9 @@ export async function translateText(text: string) {
   return result.response.text();
 }
 
-export async function generateSentences(word: string) {
+export async function generateSentences(
+  word: string
+): Promise<{ en: string; zh: string }[]> {
   if (!process.env.GEMINI_API_KEY) {
     return [
       {
