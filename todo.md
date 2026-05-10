@@ -14,21 +14,21 @@
 - [x] 建立響應式 Footer
 - [ ] 設定全域字體與配色方案 (Tailwind config)
 
-## Phase 3: Features & Supabase Integration
+## Phase 3: Database & Backend Setup
 
-- [ ] 建立首頁範例 (從 Supabase 抓取資料)
-- [ ] 建立 CRUD 範例頁面
-- [ ] 環境變數設定指引 (.env.example)
+- [x] 在 Supabase 建立 `news`, `vocabulary`, `sentences` 資料表 (提供 SQL 腳本)
+- [ ] 實作 RSS 新聞抓取腳本 (Focus Taiwan, Taipei Times)
+- [ ] 整合 AI 翻譯與造句 API (Gemini/OpenAI)
 
-## Phase 4: Deployment
+## Phase 4: Frontend Features
+
+- [ ] 新聞列表頁面 (英中對照卡片式佈局)
+- [ ] 新聞內文詳情頁面
+- [ ] 單字庫管理頁面 (單字卡、造句顯示)
+- [ ] 「加入單字庫」功能按鈕
+
+## Phase 5: Verification & Deployment
 
 - [x] GitHub Repository 連結
-- [/] Vercel 部署設定
-- [ ] 自動部署測試 (CI/CD)
-
-## Phase 5: Verification (流程檢查)
-
-- [x] 本地 Build 測試 (npm run build)
-- [x] Coding Style 檢查 (npm run lint)
-- [ ] 模擬 Commit 觸發 Husky 測試
-- [ ] Vercel 正式環境預覽
+- [x] 流程檢查與驗證 (Build, Lint, Git Hooks)
+- [ ] 自動 Commit & Push 流程驗證
