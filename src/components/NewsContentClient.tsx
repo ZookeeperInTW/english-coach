@@ -34,16 +34,9 @@ export default function NewsContentClient({
       fetch(`/api/news/translate/${articleId}`, { signal: controller.signal })
         .then((r) => r.json())
         .then((data) => {
-          if (data.translated) {
-            return fetch(`/api/news/article/${articleId}`, {
-              signal: controller.signal,
-            })
-              .then((r) => r.json())
-              .then((article) => {
-                if (article?.content_bilingual) {
-                  setBilingual(article.content_bilingual);
-                }
-              });
+          // 翻譯結果直接從回應中取得，不需要第二次請求
+          if (data.translated && Array.isArray(data.content_bilingual)) {
+            setBilingual(data.content_bilingual);
           }
         })
         .catch(() => {})
