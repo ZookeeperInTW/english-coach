@@ -6,13 +6,15 @@
 - [x] 建立 `design.md` 設計準則
 - [x] 設定 Prettier 與 ESLint
 - [x] 設定 Husky 與 lint-staged (Git Hooks)
+- [x] 設定環境變數 (.env.local)
+- [x] 安裝專案依賴 (npm install)
 - [x] 初始化 Supabase Client
 
 ## Phase 2: Core Components & Layout (RWD)
 
 - [x] 建立響應式 Navbar (Mobile Hamburger Menu)
 - [x] 建立響應式 Footer
-- [ ] 設定全域字體與配色方案 (Tailwind config)
+- [x] 設定全域字體與配色方案 (Tailwind config)
 
 ## Phase 3: Database & Backend Setup
 

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { fetchAndSyncNews } from "@/services/newsService";
+export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {

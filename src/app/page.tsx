@@ -38,6 +38,15 @@ export default async function Home() {
                 key={item.id}
                 className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow flex flex-col"
               >
+                {item.image_url && (
+                  <div className="relative h-48 w-full">
+                    <img
+                      src={item.image_url}
+                      alt={item.title_en}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                )}
                 <div className="p-8 flex-grow">
                   <div className="flex items-center space-x-2 mb-4">
                     <span
