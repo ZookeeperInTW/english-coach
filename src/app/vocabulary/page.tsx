@@ -9,23 +9,23 @@ export default async function VocabularyPage() {
     .order("created_at", { ascending: false });
 
   return (
-    <div className="bg-gray-50 min-h-screen py-16">
+    <div className="bg-bg-beige min-h-screen py-16">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
         <header className="mb-12">
-          <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight">
+          <h1 className="text-4xl font-extrabold text-text-main tracking-tight">
             我的單字庫
           </h1>
-          <p className="mt-2 text-lg text-gray-500">
+          <p className="mt-2 text-lg text-text-main/60">
             收錄您在閱讀新聞時標記的單字，並由 AI 為您生成專屬例句。
           </p>
         </header>
 
         {!vocabList || vocabList.length === 0 ? (
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-12 text-center">
-            <h2 className="text-2xl font-semibold text-gray-900">
+          <div className="bg-white/50 backdrop-blur-sm rounded-2xl shadow-sm border border-accent-soft p-12 text-center">
+            <h2 className="text-2xl font-semibold text-text-main">
               單字庫目前是空的
             </h2>
-            <p className="mt-4 text-gray-500">
+            <p className="mt-4 text-text-main/60">
               去閱讀新聞並點擊不熟的單字來開始您的學習之旅吧！
             </p>
           </div>
@@ -34,10 +34,10 @@ export default async function VocabularyPage() {
             {vocabList.map((item) => (
               <div
                 key={item.id}
-                className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 hover:border-blue-300 transition-colors"
+                className="bg-white rounded-2xl shadow-sm border border-accent-soft p-8 hover:border-primary/30 transition-colors"
               >
                 <div className="flex items-baseline justify-between mb-6">
-                  <h2 className="text-3xl font-black text-blue-600 tracking-tight">
+                  <h2 className="text-3xl font-black text-primary tracking-tight">
                     {item.word}
                   </h2>
                   <span className="text-gray-400 text-sm">
@@ -60,12 +60,12 @@ export default async function VocabularyPage() {
                         }) => (
                           <div
                             key={s.id}
-                            className="bg-blue-50 rounded-xl p-6 border border-blue-100"
+                            className="bg-primary/5 rounded-xl p-6 border border-primary/10"
                           >
-                            <p className="text-lg font-medium text-gray-800 mb-2 leading-relaxed">
+                            <p className="text-lg font-medium text-text-main mb-2 leading-relaxed">
                               {s.sentence_en}
                             </p>
-                            <p className="text-gray-600">{s.sentence_zh}</p>
+                            <p className="text-text-main/70">{s.sentence_zh}</p>
                           </div>
                         )
                       )}

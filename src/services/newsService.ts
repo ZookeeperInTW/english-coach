@@ -58,7 +58,9 @@ export async function fetchAndSyncNews() {
             .maybeSingle();
 
           if (!existingUrl && !existingTitle) {
-            const content = item.contentSnippet || item.content || "";
+            // 多重備援抓取內文
+            const content =
+              item.contentSnippet || item.content || item.description || title;
             console.log(`Syncing: ${title}`);
 
             let translatedTitle = "翻譯處理中...";

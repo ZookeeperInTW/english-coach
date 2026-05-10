@@ -7,13 +7,13 @@ export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <nav className="bg-white border-b border-gray-200 sticky top-0 z-50">
+    <nav className="bg-bg-beige border-b border-accent-soft sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex items-center">
             <Link
               href="/"
-              className="text-2xl font-bold text-blue-600 tracking-tight"
+              className="text-2xl font-bold text-primary tracking-tight"
             >
               每日英文教練
             </Link>
@@ -23,25 +23,25 @@ export default function Navbar() {
           <div className="hidden md:flex md:items-center md:space-x-8">
             <Link
               href="/"
-              className="text-gray-600 hover:text-blue-600 px-3 py-2 text-sm font-medium transition-colors"
+              className="text-text-main/70 hover:text-primary px-3 py-2 text-sm font-medium transition-colors"
             >
               首頁
             </Link>
             <Link
               href="/dashboard"
-              className="text-gray-600 hover:text-blue-600 px-3 py-2 text-sm font-medium transition-colors"
+              className="text-text-main/70 hover:text-primary px-3 py-2 text-sm font-medium transition-colors"
             >
               控制面板
             </Link>
             <Link
               href="/vocabulary"
-              className="text-gray-600 hover:text-blue-600 px-3 py-2 text-sm font-medium transition-colors"
+              className="text-text-main/70 hover:text-primary px-3 py-2 text-sm font-medium transition-colors"
             >
               我的單字庫
             </Link>
             <Link
               href="/settings"
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors shadow-sm"
+              className="bg-primary text-white px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity shadow-sm"
             >
               開始使用
             </Link>
@@ -51,7 +51,7 @@ export default function Navbar() {
           <div className="flex items-center md:hidden">
             <button
               onClick={() => setIsOpen(!isOpen)}
-              className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-blue-600 hover:bg-gray-100 focus:outline-none transition-colors"
+              className="inline-flex items-center justify-center p-2 rounded-md text-text-main/50 hover:text-primary hover:bg-accent-soft focus:outline-none transition-colors"
               aria-expanded="false"
             >
               <span className="sr-only">Open main menu</span>
@@ -92,33 +92,33 @@ export default function Navbar() {
 
       {/* Mobile Menu */}
       <div
-        className={`${isOpen ? "block" : "hidden"} md:hidden bg-white border-b border-gray-200`}
+        className={`${isOpen ? "block" : "hidden"} md:hidden bg-bg-beige border-b border-accent-soft`}
       >
         <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
           <Link
             href="/"
-            className="text-gray-600 hover:text-blue-600 block px-3 py-2 rounded-md text-base font-medium"
+            className="text-text-main/70 hover:text-primary block px-3 py-2 rounded-md text-base font-medium"
             onClick={() => setIsOpen(false)}
           >
             首頁
           </Link>
           <Link
             href="/dashboard"
-            className="text-gray-600 hover:text-blue-600 block px-3 py-2 rounded-md text-base font-medium"
+            className="text-text-main/70 hover:text-primary block px-3 py-2 rounded-md text-base font-medium"
             onClick={() => setIsOpen(false)}
           >
             控制面板
           </Link>
           <Link
             href="/vocabulary"
-            className="text-gray-600 hover:text-blue-600 block px-3 py-2 rounded-md text-base font-medium"
+            className="text-text-main/70 hover:text-primary block px-3 py-2 rounded-md text-base font-medium"
             onClick={() => setIsOpen(false)}
           >
             我的單字庫
           </Link>
           <Link
             href="/settings"
-            className="text-blue-600 font-semibold block px-3 py-2 rounded-md text-base"
+            className="text-primary font-semibold block px-3 py-2 rounded-md text-base"
             onClick={() => setIsOpen(false)}
           >
             開始使用

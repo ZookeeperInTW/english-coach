@@ -69,11 +69,11 @@ export default async function Home() {
                 <div className="bg-gray-50 px-8 py-4 border-t border-gray-100 flex justify-between items-center">
                   <Link
                     href={`/news/${item.id}`}
-                    className="text-blue-600 font-semibold hover:text-blue-700 transition-colors"
+                    className="text-primary font-semibold hover:opacity-80 transition-opacity"
                   >
                     閱讀全文 & 學習單字 &rarr;
                   </Link>
-                  <button className="text-gray-400 hover:text-blue-600 transition-colors">
+                  <button className="text-gray-400 hover:text-primary transition-colors">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       className="h-6 w-6"
