@@ -1,6 +1,6 @@
-import { createClient } from "@/utils/supabase/server";
 import { notFound } from "next/navigation";
 import NewsContent from "@/components/NewsContent";
+import { ensureTranslation } from "@/services/newsService";
 
 export default async function NewsDetailPage({
   params,
@@ -8,20 +8,16 @@ export default async function NewsDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const supabase = await createClient();
 
-  const { data: article } = await supabase
-    .from("news")
-    .select("*")
-    .eq("id", id)
-    .single();
+  // 觸發即時翻譯（如果已有翻譯會秒回，沒有則會等待 AI 產出）
+  const article = await ensureTranslation(id);
 
   if (!article) {
     notFound();
   }
 
   return (
-    <div className="bg-white min-h-screen py-16">
+    <div className="bg-bg-beige min-h-screen py-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mb-12">
           <div className="flex items-center space-x-4 mb-6">

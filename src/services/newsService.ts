@@ -5,158 +5,170 @@ import { translateText, translateToBilingual } from "./aiService";
 
 const parser = new Parser();
 
+const newsSources = [
+  {
+    name: "Focus Taiwan (Society)",
+    url: "https://feeds.feedburner.com/rsscna/engnews",
+    category: "international",
+  },
+  {
+    name: "Focus Taiwan (Business)",
+    url: "https://feeds.feedburner.com/rsscna/engbusiness",
+    category: "finance",
+  },
+];
+
 /**
- * 抓取網頁完整內容
+ * 爬取文章完整內文
  */
 async function fetchFullContent(url: string): Promise<string> {
   try {
     const response = await fetch(url, {
       headers: {
         "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
       },
     });
     const html = await response.text();
     const $ = cheerio.load(html);
 
-    // Focus Taiwan 的正文通常在 .article .paragraph 內
+    // Focus Taiwan 的正文在 .article .paragraph
     let content = $(".article .paragraph").text().trim();
 
-    // 如果找不到，試試通用的 p 標籤組合
+    // 備援：嘗試 article p 標籤
     if (!content) {
       content = $("article p")
         .map((_, el) => $(el).text())
         .get()
-        .join("\n");
+        .join(" ")
+        .trim();
     }
 
     return content;
   } catch (error) {
-    console.error(`Failed to fetch full content from ${url}:`, error);
+    console.error(`Failed to fetch content from ${url}:`, error);
     return "";
   }
 }
 
-export async function fetchAndSyncNews() {
-  console.log("Starting news sync service...");
+/**
+ * 使用者點進文章時才觸發 AI 翻譯（節省 API 流量）
+ */
+export async function ensureTranslation(articleId: string) {
   const supabase = await createClient();
 
-  // 1. 自動清理 30 天前的舊新聞
+  const { data: article } = await supabase
+    .from("news")
+    .select("*")
+    .eq("id", articleId)
+    .single();
+
+  if (!article) return null;
+
+  // 已有雙語對照，直接回傳
+  if (article.content_bilingual) return article;
+
+  console.log(`[On-demand] Translating: ${article.title_en}`);
+
+  try {
+    const [translatedTitle, bilingualContent] = await Promise.all([
+      translateText(article.title_en),
+      translateToBilingual(article.content_en),
+    ]);
+
+    const { data: updated } = await supabase
+      .from("news")
+      .update({
+        title_zh: translatedTitle,
+        content_zh: "已生成雙語對照",
+        content_bilingual: bilingualContent,
+      })
+      .eq("id", articleId)
+      .select()
+      .single();
+
+    return updated ?? article;
+  } catch (error) {
+    console.error("[On-demand] Translation failed:", error);
+    return article;
+  }
+}
+
+/**
+ * 同步新聞（只抓英文，不觸發 AI）
+ * forceClear=true 會先清空所有資料
+ */
+export async function fetchAndSyncNews(forceClear = false) {
+  const supabase = await createClient();
+
+  // 強制清空
+  if (forceClear) {
+    console.log("[Sync] Force clearing all news...");
+    await supabase
+      .from("news")
+      .delete()
+      .neq("id", "00000000-0000-0000-0000-000000000000");
+  }
+
+  // 清理 30 天前的舊新聞
   const thirtyDaysAgo = new Date();
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
-  const { error: deleteError } = await supabase
+  await supabase
     .from("news")
     .delete()
     .lt("created_at", thirtyDaysAgo.toISOString());
 
-  if (deleteError) {
-    console.error("Failed to cleanup old news:", deleteError);
-  } else {
-    console.log("Cleanup completed: old news removed.");
-  }
-
-  // 移除暫時性的強制刪除邏輯
-
-  const sources = [
-    {
-      url: "https://feeds.feedburner.com/rsscna/engnews/",
-      category: "International",
-    },
-    { url: "https://www.taipeitimes.com/xml/index.rss", category: "Business" },
-  ];
-
-  for (const source of sources) {
+  // 逐一抓取各來源
+  for (const source of newsSources) {
     try {
-      console.log(`Fetching from ${source.url}...`);
+      console.log(`[Sync] Fetching from ${source.name}...`);
       const feed = await parser.parseURL(source.url);
-      const itemsToProcess = feed.items.slice(0, 5); // 每次抓取前 5 則
 
-      for (const item of itemsToProcess) {
-        try {
-          const title = item.title || "";
-          const link = item.link || "";
+      for (const item of feed.items) {
+        const title = (item.title ?? "").trim();
+        const link = (item.link ?? "").trim();
 
-          // 2. 同時檢查連結與標題是否重複
-          const { data: existingUrl } = await supabase
-            .from("news")
-            .select("id")
-            .eq("source_url", link)
-            .maybeSingle();
+        if (!title || !link) continue;
 
-          const { data: existingTitle } = await supabase
-            .from("news")
-            .select("id")
-            .eq("title_en", title)
-            .maybeSingle();
+        // 檢查是否已存在
+        const { data: existing } = await supabase
+          .from("news")
+          .select("id")
+          .eq("source_url", link)
+          .maybeSingle();
 
-          if (!existingUrl && !existingTitle) {
-            // 先嘗試爬取網頁完整內文
-            let content = await fetchFullContent(link);
+        if (existing) continue;
 
-            // 如果爬不到完整內文，再用 RSS 的摘要作為備援
-            if (!content || content.length < 50) {
-              content =
-                (
-                  item.contentSnippet ||
-                  item.content ||
-                  item.description ||
-                  ""
-                ).trim() || title;
-            }
+        // 爬取完整內文
+        const crawled = await fetchFullContent(link);
+        const content = crawled || item.contentSnippet || item.content || "";
 
-            // 如果內容依然過短，則判定為無效新聞
-            if (content.length < 10) {
-              console.log(`Skipping invalid news: ${title}`);
-              continue;
-            }
+        if (content.trim().length < 30) {
+          console.log(`[Sync] Skipping (too short): ${title}`);
+          continue;
+        }
 
-            console.log(
-              `Syncing full content for: ${title} (${content.length} chars)`
-            );
+        console.log(`[Sync] Saving (English only): ${title}`);
 
-            let translatedTitle = "翻譯處理中...";
-            let bilingualContent = null;
+        const result = await supabase.from("news").insert({
+          title_en: title,
+          title_zh: "",
+          content_en: content.trim(),
+          content_zh: "",
+          content_bilingual: null,
+          category: source.category,
+          source_url: link,
+          image_url: item.enclosure?.url ?? null,
+        });
 
-            try {
-              // 嘗試 AI 雙語翻譯
-              translatedTitle = await translateText(title);
-              await new Promise((resolve) => setTimeout(resolve, 1000));
-              bilingualContent = await translateToBilingual(content);
-              await new Promise((resolve) => setTimeout(resolve, 1000));
-            } catch (aiError) {
-              console.warn(
-                `AI Translation failed for "${title}", saving anyway.`,
-                aiError
-              );
-              translatedTitle = `(英) ${title}`;
-            }
-
-            const { error: insertError } = await supabase.from("news").insert({
-              title_en: title,
-              title_zh: translatedTitle,
-              content_en: content,
-              content_zh: "已轉換為雙語對照",
-              content_bilingual: bilingualContent,
-              category: source.category,
-              source_url: link,
-              image_url: item.enclosure?.url || null,
-            });
-
-            if (insertError) {
-              console.error(`Failed to insert news: ${title}`, insertError);
-            } else {
-              console.log(`Successfully synced: ${title}`);
-            }
-          } else {
-            console.log(`Skipping existing news: ${title}`);
-          }
-        } catch (itemError) {
-          console.error(`Error processing item ${item.title}:`, itemError);
+        if (result.error) {
+          console.error(`[Sync] Insert failed for: ${title}`, result.error);
         }
       }
     } catch (error) {
-      console.error(`Failed to fetch from ${source.url}:`, error);
+      console.error(`[Sync] Error fetching ${source.name}:`, error);
     }
   }
+
+  console.log("[Sync] Done.");
 }

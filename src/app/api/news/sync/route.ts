@@ -2,11 +2,15 @@ import { NextResponse } from "next/server";
 import { fetchAndSyncNews } from "@/services/newsService";
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const forceClear = searchParams.get("forceClear") === "true";
+
   try {
-    await fetchAndSyncNews();
-    return NextResponse.json({ message: "Sync completed" });
+    await fetchAndSyncNews(forceClear);
+    return NextResponse.json({ success: true, cleared: forceClear });
   } catch (error) {
+    console.error("Sync failed:", error);
     return NextResponse.json({ error: "Sync failed" }, { status: 500 });
   }
 }
