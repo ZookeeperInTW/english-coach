@@ -76,7 +76,11 @@ export async function ensureTranslation(articleId: string) {
       translateToBilingual(article.content_en),
     ]);
 
-    const { data: updated } = await supabase
+    console.log(
+      `[On-demand] Got bilingual: ${JSON.stringify(bilingualContent)?.slice(0, 100)}`
+    );
+
+    const { data: updated, error: updateError } = await supabase
       .from("news")
       .update({
         title_zh: translatedTitle,
@@ -87,7 +91,23 @@ export async function ensureTranslation(articleId: string) {
       .select()
       .single();
 
-    return updated ?? article;
+    if (updateError) {
+      console.error("[On-demand] Supabase update failed:", updateError);
+      // 回傳帶有翻譯資料的假物件，讓前端可以顯示
+      return {
+        ...article,
+        title_zh: translatedTitle,
+        content_bilingual: bilingualContent,
+      };
+    }
+
+    return (
+      updated ?? {
+        ...article,
+        title_zh: translatedTitle,
+        content_bilingual: bilingualContent,
+      }
+    );
   } catch (error) {
     console.error("[On-demand] Translation failed:", error);
     return article;
