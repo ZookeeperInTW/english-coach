@@ -44,11 +44,9 @@ export default async function NewsDetailPage({
                 {new Date(article.created_at).toLocaleDateString("zh-TW")}
               </span>
             </div>
-            {user && (
-              <div>
-                <ArchiveButton newsId={id} variant="button" />
-              </div>
-            )}
+            <div>
+              <ArchiveButton newsId={id} variant="button" />
+            </div>
           </div>
           <h1 className="text-4xl font-extrabold text-text-main tracking-tight sm:text-5xl mb-4">
             {article.title_en}

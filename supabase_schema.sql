@@ -8,7 +8,8 @@ CREATE TABLE news (
   content_zh TEXT,
   category TEXT NOT NULL, -- 'international' or 'finance'
   source_url TEXT,
-  image_url TEXT
+  image_url TEXT,
+  is_archived BOOLEAN DEFAULT false
 );
 
 -- 2. 單字庫資料表 (Vocabulary)
@@ -49,17 +50,8 @@ CREATE POLICY "Users can only view sentences for their own vocabulary" ON senten
   )
 );
 
--- 4. 封存新聞資料表 (User Archived News)
-CREATE TABLE user_archived_news (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
-  news_id UUID REFERENCES news(id) ON DELETE CASCADE,
-  UNIQUE(user_id, news_id)
-);
+-- 4. 新增全局封存標記 (若資料表已存在，可直接執行此行)
+-- ALTER TABLE news ADD COLUMN IF NOT EXISTS is_archived BOOLEAN DEFAULT false;
 
-ALTER TABLE user_archived_news ENABLE ROW LEVEL SECURITY;
-
--- 使用者只能讀取與新增自己的封存紀錄
-CREATE POLICY "Users can manage their own archived news" ON user_archived_news 
-FOR ALL USING (auth.uid() = user_id);
+-- 5. (可選) 移除不再使用的 user_archived_news 資料表
+-- DROP TABLE IF EXISTS user_archived_news;

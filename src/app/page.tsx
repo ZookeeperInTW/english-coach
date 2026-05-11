@@ -5,54 +5,13 @@ import ArchiveButton from "@/components/ArchiveButton";
 export default async function Home() {
   const supabase = await createClient();
 
-  // 1. 取得當前使用者
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  // 2. 如果已登入，處理封存新聞
-  let archivedNewsIds: string[] = [];
-  if (user) {
-    // 2a. 先清除超過 30 天的封存紀錄
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
-    await supabase
-      .from("user_archived_news")
-      .delete()
-      .eq("user_id", user.id)
-      .lt("created_at", thirtyDaysAgo.toISOString());
-
-    // 2b. 取得最新的封存新聞 ID 列表
-    const { data: archived, error: archivedError } = await supabase
-      .from("user_archived_news")
-      .select("news_id")
-      .eq("user_id", user.id);
-
-    if (archivedError) {
-      console.error("Error fetching archived news:", archivedError);
-    }
-
-    if (archived && archived.length > 0) {
-      archivedNewsIds = archived.map((a) => a.news_id);
-    }
-  }
-
-  // 3. 取得新聞
-  const query = supabase
+  // 1. 取得未封存的新聞
+  const { data: news } = await supabase
     .from("news")
     .select("*")
+    .eq("is_archived", false)
     .order("created_at", { ascending: false })
-    .limit(50); // Fetch more so we have enough after filtering
-
-  const { data: allNews } = await query;
-
-  // 4. 在記憶體中過濾掉已封存的新聞，並取前 20 筆
-  let news = allNews || [];
-  if (archivedNewsIds.length > 0) {
-    news = news.filter((item) => !archivedNewsIds.includes(item.id));
-  }
-  news = news.slice(0, 20);
+    .limit(20);
 
   return (
     <div className="bg-bg-beige min-h-screen py-12">
@@ -117,7 +76,7 @@ export default async function Home() {
                   >
                     閱讀全文 & 學習單字 &rarr;
                   </Link>
-                  {user && <ArchiveButton newsId={item.id} variant="icon" />}
+                  <ArchiveButton newsId={item.id} variant="icon" />
                 </div>
               </div>
             ))}
