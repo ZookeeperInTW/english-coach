@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
-import { generateSentences } from "@/services/aiService";
+import { generateSentences, getWordDetails } from "@/services/aiService";
 
 export async function POST(request: Request) {
   const { word } = await request.json();
@@ -11,12 +11,17 @@ export async function POST(request: Request) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // 2. 加入單字庫
+  // 2. 取得單字詳細資訊 (定義、音標)
+  const details = await getWordDetails(word);
+
+  // 3. 加入單字庫
   const { data: vocab, error: vocabError } = await supabase
     .from("vocabulary")
     .insert({
       word,
-      user_id: user?.id, // 如果沒有登入則為 null (開發期)
+      user_id: user?.id,
+      definition_zh: details.definition_zh,
+      phonetic: details.phonetic,
     })
     .select()
     .single();
@@ -25,7 +30,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: vocabError.message }, { status: 500 });
   }
 
-  // 3. 觸發 AI 生成例句
+  // 4. 觸發 AI 生成例句
   const sentences = await generateSentences(word);
 
   if (sentences && sentences.length > 0) {
@@ -38,5 +43,7 @@ export async function POST(request: Request) {
     );
   }
 
-  return NextResponse.json({ message: "Word added and sentences generated" });
+  return NextResponse.json({
+    message: "Word added with details and sentences generated",
+  });
 }

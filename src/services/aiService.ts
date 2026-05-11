@@ -33,7 +33,7 @@ export async function translateToBilingual(text: string) {
     // 移除 AI 可能包含的 ```json ... ``` 標記
     const cleanedJson = responseText.replace(/```json|```/g, "").trim();
     return JSON.parse(cleanedJson);
-  } catch (e) {
+  } catch (_e) {
     console.error("Failed to parse bilingual JSON", responseText);
     return [{ en: text, zh: responseText }];
   }
@@ -65,8 +65,37 @@ export async function generateSentences(
     // 移除 markdown 代碼塊標籤
     const jsonStr = text.replace(/```json|```/g, "").trim();
     return JSON.parse(jsonStr);
-  } catch (error) {
+  } catch (_error) {
     console.error("Failed to parse AI response:", text);
     return [];
+  }
+}
+
+export async function getWordDetails(word: string): Promise<{
+  definition_zh: string;
+  phonetic: string;
+}> {
+  if (!process.env.GEMINI_API_KEY) {
+    return {
+      definition_zh: "[Mock] 模擬定義",
+      phonetic: "/mɒk/",
+    };
+  }
+
+  const prompt = `For the English word "${word}", provide:
+  1. Its Traditional Chinese (Taiwan) definition (concise).
+  2. Its IPA phonetic transcription.
+  
+  Format the output as a JSON object like this: {"definition_zh": "定義...", "phonetic": "音標..."}`;
+
+  const result = await model.generateContent(prompt);
+  const text = result.response.text();
+
+  try {
+    const jsonStr = text.replace(/```json|```/g, "").trim();
+    return JSON.parse(jsonStr);
+  } catch (_error) {
+    console.error("Failed to parse AI response for word details:", text);
+    return { definition_zh: "", phonetic: "" };
   }
 }

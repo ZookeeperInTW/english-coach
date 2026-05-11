@@ -9,13 +9,11 @@ interface BilingualSentence {
 
 interface NewsContentProps {
   contentEn: string;
-  contentZh: string;
   contentBilingual?: BilingualSentence[] | null;
 }
 
 export default function NewsContent({
   contentEn,
-  contentZh,
   contentBilingual,
 }: NewsContentProps) {
   const [selectedWord, setSelectedWord] = useState<string | null>(null);

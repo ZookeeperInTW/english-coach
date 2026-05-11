@@ -1,17 +1,18 @@
 import { createClient } from "@/utils/supabase/server";
 import Link from "next/link";
+import Image from "next/image";
 import ArchiveButton from "@/components/ArchiveButton";
 
 export default async function Home() {
   const supabase = await createClient();
 
-  // 1. 取得未封存的新聞
-  const { data: news } = await supabase
+  // 1. 取得所有新聞並在記憶體中過濾 (繞過 PostgREST 查詢解析問題)
+  const { data: allNews } = await supabase
     .from("news")
     .select("*")
-    .eq("is_archived", false)
-    .order("created_at", { ascending: false })
-    .limit(20);
+    .order("created_at", { ascending: false });
+
+  const news = (allNews || []).filter((item) => !item.is_archived).slice(0, 20);
 
   return (
     <div className="bg-bg-beige min-h-screen py-12">
@@ -43,10 +44,12 @@ export default async function Home() {
               >
                 {item.image_url && (
                   <div className="relative h-48 w-full">
-                    <img
+                    <Image
                       src={item.image_url}
                       alt={item.title_en}
-                      className="w-full h-full object-cover"
+                      fill
+                      className="object-cover"
+                      unoptimized
                     />
                   </div>
                 )}

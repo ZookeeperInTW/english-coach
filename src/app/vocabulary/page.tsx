@@ -36,15 +36,27 @@ export default async function VocabularyPage() {
                 key={item.id}
                 className="bg-white rounded-2xl shadow-sm border border-accent-soft p-8 hover:border-primary/30 transition-colors"
               >
-                <div className="flex items-baseline justify-between mb-6">
-                  <h2 className="text-3xl font-black text-primary tracking-tight">
-                    {item.word}
-                  </h2>
+                <div className="flex items-baseline justify-between mb-2">
+                  <div className="flex items-baseline gap-4">
+                    <h2 className="text-3xl font-black text-primary tracking-tight">
+                      {item.word}
+                    </h2>
+                    {item.phonetic && (
+                      <span className="text-lg text-secondary font-medium font-serif">
+                        {item.phonetic}
+                      </span>
+                    )}
+                  </div>
                   <span className="text-gray-400 text-sm">
-                    新增日期：
                     {new Date(item.created_at).toLocaleDateString("zh-TW")}
                   </span>
                 </div>
+
+                {item.definition_zh && (
+                  <p className="text-xl text-text-main/80 mb-8 font-medium">
+                    {item.definition_zh}
+                  </p>
+                )}
 
                 <div className="space-y-6">
                   <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest">
