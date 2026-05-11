@@ -48,3 +48,18 @@ CREATE POLICY "Users can only view sentences for their own vocabulary" ON senten
     AND vocabulary.user_id = auth.uid()
   )
 );
+
+-- 4. 封存新聞資料表 (User Archived News)
+CREATE TABLE user_archived_news (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  news_id UUID REFERENCES news(id) ON DELETE CASCADE,
+  UNIQUE(user_id, news_id)
+);
+
+ALTER TABLE user_archived_news ENABLE ROW LEVEL SECURITY;
+
+-- 使用者只能讀取與新增自己的封存紀錄
+CREATE POLICY "Users can manage their own archived news" ON user_archived_news 
+FOR ALL USING (auth.uid() = user_id);

@@ -1,14 +1,58 @@
 import { createClient } from "@/utils/supabase/server";
 import Link from "next/link";
+import ArchiveButton from "@/components/ArchiveButton";
 
 export default async function Home() {
   const supabase = await createClient();
 
-  const { data: news } = await supabase
+  // 1. 取得當前使用者
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  // 2. 如果已登入，處理封存新聞
+  let archivedNewsIds: string[] = [];
+  if (user) {
+    // 2a. 先清除超過 30 天的封存紀錄
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    await supabase
+      .from("user_archived_news")
+      .delete()
+      .eq("user_id", user.id)
+      .lt("created_at", thirtyDaysAgo.toISOString());
+
+    // 2b. 取得最新的封存新聞 ID 列表
+    const { data: archived, error: archivedError } = await supabase
+      .from("user_archived_news")
+      .select("news_id")
+      .eq("user_id", user.id);
+
+    if (archivedError) {
+      console.error("Error fetching archived news:", archivedError);
+    }
+
+    if (archived && archived.length > 0) {
+      archivedNewsIds = archived.map((a) => a.news_id);
+    }
+  }
+
+  // 3. 取得新聞
+  const query = supabase
     .from("news")
     .select("*")
     .order("created_at", { ascending: false })
-    .limit(20);
+    .limit(50); // Fetch more so we have enough after filtering
+
+  const { data: allNews } = await query;
+
+  // 4. 在記憶體中過濾掉已封存的新聞，並取前 20 筆
+  let news = allNews || [];
+  if (archivedNewsIds.length > 0) {
+    news = news.filter((item) => !archivedNewsIds.includes(item.id));
+  }
+  news = news.slice(0, 20);
 
   return (
     <div className="bg-bg-beige min-h-screen py-12">
@@ -28,7 +72,7 @@ export default async function Home() {
               尚無新聞資料
             </h2>
             <p className="mt-4 text-text-main/60">
-              新聞正在同步中，請稍後再試。
+              新聞正在同步中，或您已讀完所有新聞，請稍後再試。
             </p>
           </div>
         ) : (
@@ -73,22 +117,7 @@ export default async function Home() {
                   >
                     閱讀全文 & 學習單字 &rarr;
                   </Link>
-                  <button className="text-gray-400 hover:text-primary transition-colors">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-6 w-6"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"
-                      />
-                    </svg>
-                  </button>
+                  {user && <ArchiveButton newsId={item.id} variant="icon" />}
                 </div>
               </div>
             ))}
