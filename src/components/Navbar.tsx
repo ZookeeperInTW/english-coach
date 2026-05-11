@@ -28,22 +28,10 @@ export default function Navbar() {
               首頁
             </Link>
             <Link
-              href="/dashboard"
-              className="text-text-main/70 hover:text-primary px-3 py-2 text-sm font-medium transition-colors"
-            >
-              控制面板
-            </Link>
-            <Link
               href="/vocabulary"
-              className="text-text-main/70 hover:text-primary px-3 py-2 text-sm font-medium transition-colors"
-            >
-              我的單字庫
-            </Link>
-            <Link
-              href="/settings"
               className="bg-primary text-white px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity shadow-sm"
             >
-              開始使用
+              我的單字庫
             </Link>
           </div>
 
@@ -103,25 +91,11 @@ export default function Navbar() {
             首頁
           </Link>
           <Link
-            href="/dashboard"
-            className="text-text-main/70 hover:text-primary block px-3 py-2 rounded-md text-base font-medium"
-            onClick={() => setIsOpen(false)}
-          >
-            控制面板
-          </Link>
-          <Link
             href="/vocabulary"
-            className="text-text-main/70 hover:text-primary block px-3 py-2 rounded-md text-base font-medium"
-            onClick={() => setIsOpen(false)}
-          >
-            我的單字庫
-          </Link>
-          <Link
-            href="/settings"
             className="text-primary font-semibold block px-3 py-2 rounded-md text-base"
             onClick={() => setIsOpen(false)}
           >
-            開始使用
+            我的單字庫
           </Link>
         </div>
       </div>
