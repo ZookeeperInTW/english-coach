@@ -34,3 +34,12 @@
 - [x] GitHub Repository 連結
 - [x] 流程檢查與驗證 (Build, Lint, Git Hooks)
 - [x] 自動 Commit & Push 流程驗證
+
+## Phase 6: Optimization & Polish (2026-05-11)
+
+- [x] **單字庫強化**：整合 AI 自動獲取單字音標 (IPA) 與中文定義
+- [x] **單字庫 UI**：美化單字卡顯示，呈現音標與定義
+- [x] **效能優化**：實作 Server-side memory filtering 解決 PostgREST 查詢問題
+- [x] **程式碼品質**：修復所有 ESLint 警告，將 `img` 轉換為 `next/image`
+- [x] **導覽列優化**：清理冗餘連結，確保 RWD 體驗一致性
+- [x] **自動化流程**：驗證 GitHub -> Vercel 自動部署流程
