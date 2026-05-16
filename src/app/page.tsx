@@ -1,11 +1,13 @@
+import { unstable_noStore as noStore } from "next/cache";
 import sql from "@/utils/db";
 import Link from "next/link";
 import Image from "next/image";
-
-export const dynamic = "force-dynamic";
 import ArchiveButton from "@/components/ArchiveButton";
 
+export const dynamic = "force-dynamic";
+
 export default async function Home() {
+  noStore();
   const news = await sql`
     SELECT * FROM news
     WHERE is_archived = FALSE

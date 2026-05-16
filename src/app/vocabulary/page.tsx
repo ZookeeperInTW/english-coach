@@ -1,8 +1,10 @@
+import { unstable_noStore as noStore } from "next/cache";
 import sql from "@/utils/db";
 
 export const dynamic = "force-dynamic";
 
 export default async function VocabularyPage() {
+  noStore();
   const vocabList = await sql`
     SELECT
       v.*,
