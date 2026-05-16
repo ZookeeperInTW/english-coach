@@ -10,7 +10,12 @@ export async function GET(request: Request) {
     await fetchAndSyncNews(forceClear);
     return NextResponse.json({ success: true, cleared: forceClear });
   } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    const stack = error instanceof Error ? error.stack : undefined;
     console.error("Sync failed:", error);
-    return NextResponse.json({ error: "Sync failed" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Sync failed", message, stack },
+      { status: 500 }
+    );
   }
 }
