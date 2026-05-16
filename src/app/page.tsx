@@ -1,6 +1,8 @@
 import sql from "@/utils/db";
 import Link from "next/link";
 import Image from "next/image";
+
+export const dynamic = "force-dynamic";
 import ArchiveButton from "@/components/ArchiveButton";
 
 export default async function Home() {

@@ -1,5 +1,7 @@
 import sql from "@/utils/db";
 
+export const dynamic = "force-dynamic";
+
 export default async function VocabularyPage() {
   const vocabList = await sql`
     SELECT
