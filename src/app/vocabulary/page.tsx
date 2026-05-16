@@ -1,12 +1,24 @@
-import { createClient } from "@/utils/supabase/server";
+import sql from "@/utils/db";
 
 export default async function VocabularyPage() {
-  const supabase = await createClient();
-
-  const { data: vocabList } = await supabase
-    .from("vocabulary")
-    .select("*, sentences(*)")
-    .order("created_at", { ascending: false });
+  const vocabList = await sql`
+    SELECT
+      v.*,
+      COALESCE(
+        json_agg(
+          json_build_object(
+            'id', s.id,
+            'sentence_en', s.sentence_en,
+            'sentence_zh', s.sentence_zh
+          )
+        ) FILTER (WHERE s.id IS NOT NULL),
+        '[]'
+      ) AS sentences
+    FROM vocabulary v
+    LEFT JOIN sentences s ON s.vocabulary_id = v.id
+    GROUP BY v.id
+    ORDER BY v.created_at DESC
+  `;
 
   return (
     <div className="bg-bg-beige min-h-screen py-16">
@@ -20,7 +32,7 @@ export default async function VocabularyPage() {
           </p>
         </header>
 
-        {!vocabList || vocabList.length === 0 ? (
+        {vocabList.length === 0 ? (
           <div className="bg-white/50 backdrop-blur-sm rounded-2xl shadow-sm border border-accent-soft p-12 text-center">
             <h2 className="text-2xl font-semibold text-text-main">
               單字庫目前是空的

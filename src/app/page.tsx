@@ -1,18 +1,15 @@
-import { createClient } from "@/utils/supabase/server";
+import sql from "@/utils/db";
 import Link from "next/link";
 import Image from "next/image";
 import ArchiveButton from "@/components/ArchiveButton";
 
 export default async function Home() {
-  const supabase = await createClient();
-
-  // 1. 取得所有新聞並在記憶體中過濾 (繞過 PostgREST 查詢解析問題)
-  const { data: allNews } = await supabase
-    .from("news")
-    .select("*")
-    .order("created_at", { ascending: false });
-
-  const news = (allNews || []).filter((item) => !item.is_archived).slice(0, 20);
+  const news = await sql`
+    SELECT * FROM news
+    WHERE is_archived = FALSE
+    ORDER BY created_at DESC
+    LIMIT 20
+  `;
 
   return (
     <div className="bg-bg-beige min-h-screen py-12">
@@ -26,7 +23,7 @@ export default async function Home() {
           </p>
         </header>
 
-        {!news || news.length === 0 ? (
+        {news.length === 0 ? (
           <div className="bg-white/50 backdrop-blur-sm rounded-2xl shadow-sm border border-accent-soft p-12 text-center">
             <h2 className="text-2xl font-semibold text-text-main">
               尚無新聞資料

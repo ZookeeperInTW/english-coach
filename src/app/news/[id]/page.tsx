@@ -1,4 +1,4 @@
-import { createClient } from "@/utils/supabase/server";
+import sql from "@/utils/db";
 import { notFound } from "next/navigation";
 import NewsContentClient from "@/components/NewsContentClient";
 import ArchiveButton from "@/components/ArchiveButton";
@@ -9,19 +9,8 @@ export default async function NewsDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const supabase = await createClient();
 
-  // 取得當前登入使用者
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  // 直接抓取文章——不等 AI，秒開
-  const { data: article } = await supabase
-    .from("news")
-    .select("*")
-    .eq("id", id)
-    .single();
+  const [article] = await sql`SELECT * FROM news WHERE id = ${id}`;
 
   if (!article) notFound();
 
@@ -58,7 +47,6 @@ export default async function NewsDetailPage({
           )}
         </div>
 
-        {/* Client component 負責顯示內容並在背景觸發翻譯 */}
         <NewsContentClient
           articleId={id}
           contentEn={article.content_en}

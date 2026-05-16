@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/utils/supabase/server";
+import sql from "@/utils/db";
+
 export const dynamic = "force-dynamic";
 
 export async function GET(
@@ -7,11 +8,8 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from("news")
-    .select("content_bilingual, title_zh")
-    .eq("id", id)
-    .single();
+  const [data] = await sql`
+    SELECT content_bilingual, title_zh FROM news WHERE id = ${id}
+  `;
   return NextResponse.json(data ?? {});
 }

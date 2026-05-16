@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/utils/supabase/server";
+import sql from "@/utils/db";
 import { translateText, translateToBilingual } from "@/services/aiService";
+
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
@@ -9,23 +10,16 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const supabase = await createClient();
 
-  // 1. 抓文章
-  const { data: article, error: fetchError } = await supabase
-    .from("news")
-    .select("*")
-    .eq("id", id)
-    .single();
+  const [article] = await sql`SELECT * FROM news WHERE id = ${id}`;
 
-  if (fetchError || !article) {
+  if (!article) {
     return NextResponse.json(
       { success: false, error: "Article not found" },
       { status: 404 }
     );
   }
 
-  // 2. 已有翻譯，直接回傳
   if (article.content_bilingual) {
     return NextResponse.json({
       success: true,
@@ -35,7 +29,6 @@ export async function GET(
     });
   }
 
-  // 3. 無翻譯，呼叫 AI
   console.log(`[Translate API] Translating: ${article.title_en}`);
   console.log(
     `[Translate API] Content length: ${article.content_en?.length ?? 0}`
@@ -51,23 +44,22 @@ export async function GET(
       `[Translate API] Bilingual result: ${JSON.stringify(bilingualContent)?.slice(0, 200)}`
     );
 
-    // 4. 存回資料庫
-    const { error: updateError } = await supabase
-      .from("news")
-      .update({
-        title_zh: translatedTitle,
-        content_zh: "已生成雙語對照",
-        content_bilingual: bilingualContent,
-      })
-      .eq("id", id);
-
-    if (updateError) {
-      console.error(`[Translate API] DB update failed:`, updateError);
-      // DB 寫入失敗，但仍然回傳翻譯結果給前端顯示
+    try {
+      await sql`
+        UPDATE news
+        SET
+          title_zh          = ${translatedTitle},
+          content_zh        = '已生成雙語對照',
+          content_bilingual = ${sql.json(bilingualContent)}
+        WHERE id = ${id}
+      `;
+    } catch (dbErr) {
+      const dbError = dbErr instanceof Error ? dbErr.message : String(dbErr);
+      console.error(`[Translate API] DB update failed:`, dbError);
       return NextResponse.json({
         success: true,
         translated: true,
-        dbError: updateError.message,
+        dbError,
         content_bilingual: bilingualContent,
         title_zh: translatedTitle,
       });

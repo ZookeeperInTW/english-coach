@@ -1,5 +1,5 @@
 import Parser from "rss-parser";
-import { createClient } from "@/utils/supabase/server";
+import sql from "@/utils/db";
 import * as cheerio from "cheerio";
 import { translateText, translateToBilingual } from "./aiService";
 
@@ -18,9 +18,6 @@ const newsSources = [
   },
 ];
 
-/**
- * 爬取文章完整內文
- */
 async function fetchFullContent(url: string): Promise<string> {
   try {
     const response = await fetch(url, {
@@ -32,10 +29,8 @@ async function fetchFullContent(url: string): Promise<string> {
     const html = await response.text();
     const $ = cheerio.load(html);
 
-    // Focus Taiwan 的正文在 .article .paragraph
     let content = $(".article .paragraph").text().trim();
 
-    // 備援：嘗試 article p 標籤
     if (!content) {
       content = $("article p")
         .map((_, el) => $(el).text())
@@ -51,21 +46,13 @@ async function fetchFullContent(url: string): Promise<string> {
   }
 }
 
-/**
- * 使用者點進文章時才觸發 AI 翻譯（節省 API 流量）
- */
 export async function ensureTranslation(articleId: string) {
-  const supabase = await createClient();
-
-  const { data: article } = await supabase
-    .from("news")
-    .select("*")
-    .eq("id", articleId)
-    .single();
+  const [article] = await sql`
+    SELECT * FROM news WHERE id = ${articleId}
+  `;
 
   if (!article) return null;
 
-  // 已有雙語對照，直接回傳
   if (article.content_bilingual) return article;
 
   console.log(`[On-demand] Translating: ${article.title_en}`);
@@ -80,26 +67,15 @@ export async function ensureTranslation(articleId: string) {
       `[On-demand] Got bilingual: ${JSON.stringify(bilingualContent)?.slice(0, 100)}`
     );
 
-    const { data: updated, error: updateError } = await supabase
-      .from("news")
-      .update({
-        title_zh: translatedTitle,
-        content_zh: "已生成雙語對照",
-        content_bilingual: bilingualContent,
-      })
-      .eq("id", articleId)
-      .select()
-      .single();
-
-    if (updateError) {
-      console.error("[On-demand] Supabase update failed:", updateError);
-      // 回傳帶有翻譯資料的假物件，讓前端可以顯示
-      return {
-        ...article,
-        title_zh: translatedTitle,
-        content_bilingual: bilingualContent,
-      };
-    }
+    const [updated] = await sql`
+      UPDATE news
+      SET
+        title_zh          = ${translatedTitle},
+        content_zh        = '已生成雙語對照',
+        content_bilingual = ${sql.json(bilingualContent)}
+      WHERE id = ${articleId}
+      RETURNING *
+    `;
 
     return (
       updated ?? {
@@ -114,31 +90,16 @@ export async function ensureTranslation(articleId: string) {
   }
 }
 
-/**
- * 同步新聞（只抓英文，不觸發 AI）
- * forceClear=true 會先清空所有資料
- */
 export async function fetchAndSyncNews(forceClear = false) {
-  const supabase = await createClient();
-
-  // 強制清空
   if (forceClear) {
     console.log("[Sync] Force clearing all news...");
-    await supabase
-      .from("news")
-      .delete()
-      .neq("id", "00000000-0000-0000-0000-000000000000");
+    await sql`DELETE FROM news`;
   }
 
-  // 清理 30 天前的舊新聞
   const thirtyDaysAgo = new Date();
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-  await supabase
-    .from("news")
-    .delete()
-    .lt("created_at", thirtyDaysAgo.toISOString());
+  await sql`DELETE FROM news WHERE created_at < ${thirtyDaysAgo.toISOString()}`;
 
-  // 逐一抓取各來源
   for (const source of newsSources) {
     try {
       console.log(`[Sync] Fetching from ${source.name}...`);
@@ -150,16 +111,12 @@ export async function fetchAndSyncNews(forceClear = false) {
 
         if (!title || !link) continue;
 
-        // 檢查是否已存在
-        const { data: existing } = await supabase
-          .from("news")
-          .select("id")
-          .eq("source_url", link)
-          .maybeSingle();
+        const [existing] = await sql`
+          SELECT id FROM news WHERE source_url = ${link}
+        `;
 
         if (existing) continue;
 
-        // 爬取完整內文
         const crawled = await fetchFullContent(link);
         const content = crawled || item.contentSnippet || item.content || "";
 
@@ -170,19 +127,17 @@ export async function fetchAndSyncNews(forceClear = false) {
 
         console.log(`[Sync] Saving (English only): ${title}`);
 
-        const result = await supabase.from("news").insert({
-          title_en: title,
-          title_zh: "",
-          content_en: content.trim(),
-          content_zh: "",
-          content_bilingual: null,
-          category: source.category,
-          source_url: link,
-          image_url: item.enclosure?.url ?? null,
-        });
-
-        if (result.error) {
-          console.error(`[Sync] Insert failed for: ${title}`, result.error);
+        try {
+          await sql`
+            INSERT INTO news
+              (title_en, title_zh, content_en, content_zh, content_bilingual,
+               category, source_url, image_url)
+            VALUES
+              (${title}, '', ${content.trim()}, '', ${null},
+               ${source.category}, ${link}, ${item.enclosure?.url ?? null})
+          `;
+        } catch (err) {
+          console.error(`[Sync] Insert failed for: ${title}`, err);
         }
       }
     } catch (error) {
